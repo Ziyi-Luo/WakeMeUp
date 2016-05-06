@@ -1,5 +1,5 @@
 clear
-a = csvread('4-22.csv')
+a = csvread('4-21.csv')
 fig = figure(1);
     plot(a(:,1),a(:,2)*20,'r','LineWidth',2)
     hold on
