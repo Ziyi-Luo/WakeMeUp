@@ -35,12 +35,12 @@ clf.fit(training_X, training_Y)
 predict_from_training = clf.predict(training_X)
 
 # Set the threshold
-threshold = statistics.median(predict_from_training)
-
+# threshold = statistics.median(predict_from_training)
+threshold = 0.4680
 
 #WRITE TO THE FILE!!!!!!!!!!!
-for i in range(0, len(training_Y)):
-	output_writer.writerows([[training_Y[i], predict_from_training[i]]])
+# for i in range(0, len(training_Y)):
+# 	output_writer.writerows([[training_Y[i], predict_from_training[i]]])
 
 
 
@@ -57,8 +57,8 @@ predict_from_test = clf.predict(test_X)
 
 
 # WRITE TO THE FILE!!!!!!!!!!!
-for i in range(0, len(test_Y)):
-	output_writer.writerows([[test_Y[i], predict_from_test[i]]])
+# for i in range(0, len(test_Y)):
+# 	output_writer.writerows([[test_Y[i], predict_from_test[i]]])
 
 
 
