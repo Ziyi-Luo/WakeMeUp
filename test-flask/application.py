@@ -102,6 +102,7 @@ def analyze_image(coefficients, threshold):
 
 @app.route("/trigger", method = ['GET', 'POST', 'PUT'])
 def handle_trigger():
+	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
 	coefficients = [1 1 1 1 1]
 	threshold = 0.5
 
