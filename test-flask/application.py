@@ -100,11 +100,16 @@ def analyze_image(coefficients, threshold):
 		return False
 	return True
 
-@app.route("/trigger", method = ['GET', 'POST', 'PUT'])
+@app.route("/trigger", methods =['GET', 'POST', 'PUT'])
 def handle_trigger():
 	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
-	coefficients = [1 1 1 1 1]
-	threshold = 0.5
+	latest_time = str(request.data)
+	print 'DATA = ', latest_time
+	print 'VALUES = ', request.values
+	print 'FORM = ', request.form
+
+	coefficients = [0.01632861, 0.01365656, 0.01353211, 0.01518467, 0.01966368]
+	threshold = 0.457611117866
 
 	ci = threading.Thread(name='capture_image', target=capture_image)
 	ci.start()
@@ -118,4 +123,4 @@ def handle_trigger():
 	return 'please wake the person up in 30 seconds!!!'
 
 if __name__ == '__main__':
-	app.run()
+	app.run(debug=True, host='0.0.0.0')

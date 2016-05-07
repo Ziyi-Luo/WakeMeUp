@@ -35,8 +35,8 @@ clf.fit(training_X, training_Y)
 predict_from_training = clf.predict(training_X)
 
 # Set the threshold
-# threshold = statistics.median(predict_from_training)
-threshold = 0.4680
+threshold = statistics.median(predict_from_training)
+# threshold = 0.4680
 
 #WRITE TO THE FILE!!!!!!!!!!!
 # for i in range(0, len(training_Y)):
@@ -71,5 +71,6 @@ for i in range(0, len(predict_from_test)):
 
 print 'Test error = ', mean_squared_error(test_Y, predict_from_test)
 print 'The threshold is = ' , threshold
+print 'The coefficient is = ', clf.coef_
 
 
