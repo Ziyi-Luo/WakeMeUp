@@ -18,6 +18,10 @@ from os import listdir
 from os.path import isfile, join
 
 app = Flask(__name__)
+shouldntwake = True
+# CHANGE HERE
+coefficients = [0.01632861, 0.01365656, 0.01353211, 0.01518467, 0.01966368]
+threshold = 0.457611117866
 
 # method used in analyze_image
 def mse(imageA, imageB):
@@ -30,6 +34,19 @@ def mse(imageA, imageB):
 	# return the MSE, the lower the error, the more "similar"
 	# the two images are
 	return err
+
+def analyze_image_thread(waketime, interval):
+
+	global shouldntwake
+
+	# Start analyzing images
+	time.sleep(max(150, waketime - interval - time.time())) # wait for 5 images or wait for the earliest start time
+
+	while shouldntwake and time.time() < waketime + interval:
+		shouldntwake = analyze_image(coefficients, threshold)
+		time.sleep(31) # wait for a new image to come in
+
+	shouldntwake = False
 
 def capture_image():
 	try:
@@ -100,29 +117,32 @@ def analyze_image(coefficients, threshold):
 		return False
 	return True
 
-@app.route("/trigger", methods =['GET', 'POST', 'PUT'])
+@app.route("/trigger", methods =['POST'])
 def handle_trigger():
+
+	global shouldntwake
 	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
 	# test to receive message from http post
-	print 'REQUEST FORM: ', request.form
-	latest_time = str(request.data)
-	print 'DATA = ', latest_time
-	print 'VALUES = ', request.values
-	print 'FORM = ', request.form
+	# parameters = waketime +- interval
+	data = request.data
+	jsonobj = json.loads(data)
+	print 'REQUEST_DATA is: ', jsonobj
+	waketime = jsonobj['waketime']
+	interval = jsonobj['interval']
 
-	coefficients = [0.01632861, 0.01365656, 0.01353211, 0.01518467, 0.01966368]
-	threshold = 0.457611117866
+	# Start collecting images
+	ci = threading.Thread(name='capture_image', target=capture_image)
+	ci.start()
 
-	# ci = threading.Thread(name='capture_image', target=capture_image)
-	# ci.start()
+	# Start preparing to analyze data
+	ai = threading.Thread(name='analyze_image_thread', target=analyze_image_thread, args=[waketime, interval])
+	ai.start()
 
-	# time.sleep(150) # wait for 5 images
-	# shouldntwake = True
-	# while shouldntwake:
-	# 	shouldntwake = analyze_image(coefficients, threshold)
-	# 	time.sleep(31) # wait for a new image to come in
+	return jsonify({'data':'OK!!!!!'})
 
-	return 'please wake the person up in 30 seconds!!!'
+@app.route("/wakeornot", methods=["GET"])
+def wake_or_not():
+	return jsonify({"data":(not shouldntwake)}) # COULD BE WRONG
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0')
