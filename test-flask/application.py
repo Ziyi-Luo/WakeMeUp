@@ -103,6 +103,8 @@ def analyze_image(coefficients, threshold):
 @app.route("/trigger", methods =['GET', 'POST', 'PUT'])
 def handle_trigger():
 	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
+	# test to receive message from http post
+	print 'REQUEST FORM: ', request.form
 	latest_time = str(request.data)
 	print 'DATA = ', latest_time
 	print 'VALUES = ', request.values
