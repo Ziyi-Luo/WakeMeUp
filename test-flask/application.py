@@ -113,14 +113,14 @@ def handle_trigger():
 	coefficients = [0.01632861, 0.01365656, 0.01353211, 0.01518467, 0.01966368]
 	threshold = 0.457611117866
 
-	ci = threading.Thread(name='capture_image', target=capture_image)
-	ci.start()
+	# ci = threading.Thread(name='capture_image', target=capture_image)
+	# ci.start()
 
-	time.sleep(150) # wait for 5 images
-	shouldntwake = True
-	while shouldntwake:
-		shouldntwake = analyze_image(coefficients, threshold)
-		time.sleep(31) # wait for a new image to come in
+	# time.sleep(150) # wait for 5 images
+	# shouldntwake = True
+	# while shouldntwake:
+	# 	shouldntwake = analyze_image(coefficients, threshold)
+	# 	time.sleep(31) # wait for a new image to come in
 
 	return 'please wake the person up in 30 seconds!!!'
 
