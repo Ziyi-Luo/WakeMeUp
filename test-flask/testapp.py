@@ -3,19 +3,18 @@ import threading
 import time
 import requests
 import json
+from flask import render_template, jsonify, Flask
 app = Flask(__name__)
 
 
 @app.route("/trigger", methods =['GET', 'POST', 'PUT'])
 def handle_trigger():
-	print 'REQUEST FORM: ', request.form
-	latest_time = str(request.data)
-	print 'REQUEST_DATA is: ', latest_time
-	return 'hello world'
-	# data = json.loads(request.data)
- #        print 'JSON:',data
+	data = request.data
+	jsonobj = json.loads(data)
+	print 'REQUEST_DATA is: ', jsonobj
+	
+	return jsonify({'data':data})
 
-    #return json.dumps({'data':'Hello World'})
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0')
