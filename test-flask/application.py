@@ -142,7 +142,8 @@ def handle_trigger():
 
 @app.route("/wakeornot", methods=["GET"])
 def wake_or_not():
-	return jsonify({"data":(not shouldntwake)}) # COULD BE WRONG
+	return jsonify({"data":str(not shouldntwake)}) # COULD BE WRONG
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0')
+
