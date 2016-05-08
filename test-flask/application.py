@@ -1,6 +1,7 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import threading
 import time
+import json
 
 # for capture image
 import numpy as np
@@ -40,12 +41,17 @@ def analyze_image_thread(waketime, interval):
 	global shouldntwake
 
 	# Start analyzing images
-	time.sleep(max(150, waketime - interval - time.time())) # wait for 5 images or wait for the earliest start time
+	# time.sleep(max(150, waketime - interval - time.time())) # wait for 5 images or wait for the earliest start time
 
-	while shouldntwake and time.time() < waketime + interval:
-		shouldntwake = analyze_image(coefficients, threshold)
-		time.sleep(31) # wait for a new image to come in
+	# while shouldntwake and time.time() < waketime + interval:
+	# 	shouldntwake = analyze_image(coefficients, threshold)
+	# 	time.sleep(31) # wait for a new image to come in
 
+	# simulate updating shouldntwake
+	for i in range(1,3):
+		time.sleep(5)
+
+	# set the global shouldnt awake
 	shouldntwake = False
 
 def capture_image():
@@ -119,8 +125,7 @@ def analyze_image(coefficients, threshold):
 
 @app.route("/trigger", methods =['POST'])
 def handle_trigger():
-
-	global shouldntwake
+	
 	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
 	# test to receive message from http post
 	# parameters = waketime +- interval
@@ -132,17 +137,18 @@ def handle_trigger():
 
 	# Start collecting images
 	ci = threading.Thread(name='capture_image', target=capture_image)
-	ci.start()
+	# ci.start()
 
 	# Start preparing to analyze data
 	ai = threading.Thread(name='analyze_image_thread', target=analyze_image_thread, args=[waketime, interval])
 	ai.start()
 
-	return jsonify({'data':'OK!!!!!'})
+	return jsonify({'data':'ok'})
 
 @app.route("/wakeornot", methods=["GET"])
 def wake_or_not():
-	return jsonify({"data":str(not shouldntwake)}) # COULD BE WRONG
+	return jsonify({"data":not shouldntwake}) # COULD BE WRONG
+	# return jsonify({"data":True})
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0')
