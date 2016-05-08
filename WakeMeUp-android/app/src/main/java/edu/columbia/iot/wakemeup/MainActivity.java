@@ -1,6 +1,13 @@
 package edu.columbia.iot.wakemeup;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
+import android.media.MediaPlayer;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -26,12 +33,9 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,13 +48,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AlarmManager alarmManager;
     private PendingIntent pi;
     private AtomicBoolean setLock = new AtomicBoolean();
-    private TextView mTextView;
+    public TextView mTextView;
+    private boolean startListening = false;
+    private boolean end = false;
+    private InetAddress serverIP;
+    private MediaPlayer mediaPlayer;
+    private Handler mainHandler = new Handler();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setLock.set(true);
         bindViews();
+        mainHandler = new Handler(Looper.getMainLooper()){
+          @Override
+          public void handleMessage(Message msg) {
+              Bundle info = msg.getData();
+              if(info.containsKey("invoke")){
+                  if(info.getInt("invoke") == 0)
+                      startalarm();
+              }
+          }
+          };
+        try{
+            serverIP = InetAddress.getByName("160.39.254.183");
+        } catch (UnknownHostException e){
+            Toast.makeText(MainActivity.this, "Server unreachable, please set server first.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void bindViews() {
@@ -68,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn_http_get.setOnClickListener(this);
 
     }
+
 
 
     @Override
@@ -111,51 +136,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .show();
                 break;
             case R.id.btn_http_get:
-                //get_http();
-                post_http();
+                // get_http2();
+                post_http(System.currentTimeMillis(), 900000);
                 break;
         }
     }
 
-    private void get_http(){
-        // Instantiate the RequestQueue.
+    private void post_http(long waketime, long interval){
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://192.168.231.136:5000/";
-
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        mTextView.setText("Response is: "+ response.substring(0,500));
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                mTextView.setText("That didn't work!");
-            }
-        });
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);
-    }
-
-    private void post_http(){
-        RequestQueue queue = Volley.newRequestQueue(this);
-        final String URL = "http://209.2.210.84:5000/trigger";
+        final String URL = "http://" + serverIP.getHostAddress() + ":5000/trigger";
         // Post params to be sent to the server
         HashMap<String, String> params = new HashMap<String, String>();
-        params.put("item", "connect");
+        params.put("type", "open");
+        params.put("waketime", Long.toString(waketime));
+        params.put("interval", Long.toString(interval));
+        final PeriodGet myThread = new PeriodGet(serverIP.getHostAddress(),this);
 
         JsonObjectRequest req = new JsonObjectRequest(URL, new JSONObject(params),
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            mTextView.setText("Response is: "+ response.toString());
-                            // VolleyLog.v("Response:%n %s", response.toString(4));
+                            String info = response.getString("data");
+                            if(info.equals("ok")) {
+                                startListening = true;
+                                myThread.start();
+                                VolleyLog.e("INFO: ", "Server set done.");
+                            }
+                            else{
+                                startListening = false;
+                                VolleyLog.e("post_http(): Server failed to startup.");
+                            }
                         }
-                        catch (Exception e) {
+                        catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
@@ -169,4 +182,76 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 // add the request object to the queue to be executed
         queue.add(req);
     }
+
+    public void startalarm(){
+        Intent intent = new Intent(this, ClockActivity.class);
+        startActivity(intent);
+    }
+
+    class PeriodGet extends Thread {
+        private String serverIP;
+        private boolean end;
+        public PeriodGet(String serverIP,MainActivity root){
+            this.serverIP = serverIP;
+            end=false;
+        }
+
+        public void run(){
+            try {
+                while (!end) {
+                    Thread.sleep(5000);
+                    Log.e("INFO: ", "Invoke get_http");
+                    get_http();
+                }
+                Message message = new Message();
+                Bundle b = new Bundle();
+                b.putInt("invoke",0);
+                message.setData(b);
+                MainActivity.this.mainHandler.sendMessage(message);
+            } catch (InterruptedException e){
+                Log.e("Error: ",e.getMessage());
+            }
+            end=false;
+        }
+
+        private void get_http(){
+            // Instantiate the RequestQueue.
+            RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+            String url = new String();
+            if(serverIP != null) {
+                url = "http://" + serverIP + ":5000/wakeornot";
+            }
+            else {
+                return;
+            }
+
+            // Request a string response from the provided URL.
+            JsonObjectRequest req = new JsonObjectRequest(url, null,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                boolean info = response.getBoolean("data");
+                                Log.e("info message",Boolean.toString(info));
+                                if(info) {
+                                    end = true;
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    VolleyLog.e("Error: ", error.getMessage());
+                }
+            });
+
+// add the request object to the queue to be executed
+            queue.add(req);
+        }
+
+    };
 }
+
+
