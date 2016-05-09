@@ -41,15 +41,15 @@ def analyze_image_thread(waketime, interval):
 	global shouldntwake
 
 	# Start analyzing images
-	# time.sleep(max(150, waketime - interval - time.time())) # wait for 5 images or wait for the earliest start time
+	time.sleep(max(150, (24 * 3600 + waketime - interval - time.time() / 1000) % (24 * 3600)) # wait for 5 images or wait for the earliest start time
 
-	# while shouldntwake and time.time() < waketime + interval:
-	# 	shouldntwake = analyze_image(coefficients, threshold)
-	# 	time.sleep(31) # wait for a new image to come in
+	while shouldntwake and time.time() < waketime + interval:
+		shouldntwake = analyze_image(coefficients, threshold)
+		time.sleep(31) # wait for a new image to come in
 
-	# simulate updating shouldntwake
-	for i in range(1,3):
-		time.sleep(5)
+	# # simulate updating shouldntwake
+	# for i in range(1,3):
+	# 	time.sleep(5)
 
 	# set the global shouldnt awake
 	shouldntwake = False
@@ -128,12 +128,12 @@ def handle_trigger():
 	
 	# NOTE: this assumes trigger only happens 30 min prior to the ealiest wakeup time
 	# test to receive message from http post
-	# parameters = waketime +- interval
+	# parameters = waketime +- interval (BOTH IN MIN)
 	data = request.data
 	jsonobj = json.loads(data)
 	print 'REQUEST_DATA is: ', jsonobj
-	waketime = jsonobj['waketime']
-	interval = jsonobj['interval']
+	waketime = jsonobj['waketime'] * 60
+	interval = jsonobj['interval'] * 60
 
 	# Start collecting images
 	ci = threading.Thread(name='capture_image', target=capture_image)
