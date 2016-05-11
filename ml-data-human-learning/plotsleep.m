@@ -1,5 +1,5 @@
 clear
-a = csvread('4-21.csv')
+a = csvread('4-28.csv')
 fig = figure(1);
     plot(a(:,1),a(:,2)*20,'r','LineWidth',2)
     hold on
@@ -8,4 +8,5 @@ fig = figure(1);
     legend('Jawnbone data','Diff between images MSE');
     xlabel('Time');
     ylabel('Value');
+    title('April 28');
     box off;

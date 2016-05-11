@@ -24,10 +24,6 @@ shouldntwake = True
 coefficients = [0.01632861, 0.01365656, 0.01353211, 0.01518467, 0.01966368]
 threshold = 0.457611117866
 
-MSEs = []
-previous = None
-current = None
-
 # method used in analyze_image
 def mse(imageA, imageB):
 	# the 'Mean Squared Error' between the two images is the
@@ -40,42 +36,43 @@ def mse(imageA, imageB):
 	# the two images are
 	return err
 
-def get_pending_time(day, waketime, interval):
-	rightnow = time.localtime().tm_hour * 3600 + time.localtime().tm_min * 60 + time.localtime().tm_sec
-	localtime = (day - time.localtime().tm_mday) * 24 * 3600 + waketime - interval - rightnow - 150 # 
-	if localtime<0:
-		return 0
-	print "pending time: ",localtime
-	return localtime
-
-def analyze_image_thread(day, waketime, interval,localtime):
+def analyze_image_thread(day, waketime, interval):
 
 	global shouldntwake
 
 	print 'waketime = ' + str(waketime)
 	print 'interval = ' + str(interval)
 
+	rightnow = time.localtime().tm_hour * 3600 + time.localtime().tm_min * 60 + time.localtime().tm_sec
+	localtime = (day - time.localtime().tm_mday) * 24 * 3600 + waketime - interval - rightnow - 150 # 
+
+	print localtime
+
 	# Start analyzing images
 	# Only when 
 	# if localtime > 0:
-	time.sleep(localtime) # wait for 5 images or wait for the earliest start time
+	time.sleep(max(150, localtime)) # wait for 5 images or wait for the earliest start time
 
 	print "START Analyzing data......"
 
 	rightnow = time.localtime().tm_hour * 3600 + time.localtime().tm_min * 60 + time.localtime().tm_sec
 	till_latest = (day - time.localtime().tm_mday) * 24 * 3600 + waketime + interval - rightnow # sec till latest wakeup time
-	if time.localtime().tm_sec % 30 == 0:
-		time.sleep(15)
+
 	while (shouldntwake and till_latest > 0):
 		print "???????? INSIDE OF WHILE LOOP ?????????"
-		tmp = time.time()
 		shouldntwake = analyze_image(coefficients, threshold)
+		print "-------- analyzing once --------"
+		time.sleep(30) # wait for a new image to come in
+
 		rightnow = time.localtime().tm_hour * 3600 + time.localtime().tm_min * 60 + time.localtime().tm_sec
 		till_latest = (day - time.localtime().tm_mday) * 24 * 3600 + waketime + interval - rightnow
-		delta = time.time() - tmp
-		print "-------- analyzing once --------"
-		time.sleep(30-delta)
 
+
+	# # simulate updating shouldntwake
+	# for i in range(1,3):
+	# 	time.sleep(5)
+
+	# set the global shouldnt awake
 	shouldntwake = False
 
 def capture_image():
@@ -84,27 +81,27 @@ def capture_image():
 	os.system("python get2.py")
 
 def analyze_image(coefficients, threshold):
-	global MSEs
-	global previous
-	global current
 
 	mypath = '/usr/local/Cellar/python/2.7.11/Frameworks/Python.framework/Versions/2.7/Resources/Python.app/Contents/Resources' # MY PATH COULD BE WRONG
-	tmp = Image.open(mypath+"/kinect.png")
-	print "read kinect.png"
-	contraster = ImageEnhance.Contrast(tmp)
-	imEnhance = contraster.enhance(4.0)
-	if previous == None:
-		current = numpy.asarray(tmp)
-		previous = current
-		return True
-	previous = current
-	current = numpy.asarray(tmp)
-	MSEs.append(mse(previous,current))
-		# print cmse
-	if(len(MSEs)<5):
-		return True
+	files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
-	wake_or_not = sum([a*b for a,b in zip(coefficients, MSEs[len(MSEs)-5:len(MSEs)])])
+	previous = None
+	current = None
+	MSEs = []
+	for img in files:
+		tmp = Image.open(mypath+"/"+img)
+		contraster = ImageEnhance.Contrast(tmp)
+		imEnhance = contraster.enhance(4.0)
+		current = numpy.asarray(tmp)
+		if previous == None:
+			previous = current
+			continue
+		cmse = mse(previous,current)
+		previous = current
+		MSEs.append(cmse)
+		# print cmse
+
+	wake_or_not = sum([a*b for a,b in zip(coefficients, MSE[len(MSE)-5:len(MSE)])])
 	if wake_or_not >= threshold: # THIS IS A LIGHT SLEEP
 		return False
 	return True
@@ -127,14 +124,12 @@ def handle_trigger():
 	print interval
 
 	# Start collecting images
-	pending_time = get_pending_time(day, waketime, interval)
-
 	ci = threading.Thread(name='capture_image', target=capture_image)
 	ci.start()
 
 
 	# Start preparing to analyze data
-	ai = threading.Thread(name='analyze_image_thread', target=analyze_image_thread, args=[day, waketime, interval, pending_time])
+	ai = threading.Thread(name='analyze_image_thread', target=analyze_image_thread, args=[day, waketime, interval])
 	ai.start()
 
 	return jsonify({'data':'ok'})
