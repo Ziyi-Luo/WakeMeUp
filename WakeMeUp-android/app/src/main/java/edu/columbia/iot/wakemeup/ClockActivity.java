@@ -2,9 +2,11 @@ package edu.columbia.iot.wakemeup;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import java.util.Calendar;
 
@@ -29,10 +31,14 @@ public class ClockActivity extends AppCompatActivity {
         new AlertDialog.Builder(ClockActivity.this).setTitle("Alarm")
                 .setMessage("ALARM!\n Current time "+currentTime.get(Calendar.HOUR_OF_DAY)+":"+currentTime.get(Calendar.MINUTE))
                 .setIcon(R.mipmap.alarm_icon)
-                .setPositiveButton("关闭闹铃", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         mediaPlayer.stop();
+                        Intent intent = new Intent(Intent.ACTION_DEFAULT);
+                        intent.putExtra("invoke",1);
+                        sendBroadcast(intent);
+                         // Log.e("Info ", "Sent a broadcast");
                         ClockActivity.this.finish();
                     }
                 }).show();

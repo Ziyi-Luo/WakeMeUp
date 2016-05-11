@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">WakeMeUp</string>
+    <string name="btn_set_ip">Set Server IP</string>
+    <string name="btn_start_alarm">START!</string>
+    <string name="interval">20 mins</string>
+    <string name="txt_interval">  Interval</string>
+    <string name="rb_normal">Normal Alarm</string>
+    <string name="rb_wakemeup">WakeMeUp</string>
+    <string name="alarmTime">07:00 AM</string>
 </resources>
