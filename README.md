@@ -5,6 +5,6 @@ __Group member__: Ziyi Luo, Yuechen Zhao, Yazhuo Nan
 
 Description
 -----------
-Project website [link](http://iotcolumbia2016tue4.weebly.com/)
+Project website [link](http://iotcolumbia2016tue4.weebly.com/).
 
 Course website [link](http://iotcolumbia.weebly.com/).
