@@ -33,7 +33,7 @@ To start the server, under the root directory do
 cd test-flask
 python application.py
 ```
-To create the Android appication, build WakeMeUp-android using Android Studio. Note that the application requires a minimum Android OS version 4.4.
+To create the Android appication, build `WakeMeUp-android` using Android Studio. Note that the application requires a minimum Android OS version 4.4.
 To run the application, make sure the server has a reachable IP address for the client. Set the IP and enjoy the comfortable sleep provided by WakeMeUp!
 
 Distribution of works
