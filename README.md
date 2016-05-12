@@ -36,3 +36,8 @@ python application.py
 To create the Android appication, build WakeMeUp-android using Android Studio. Note that the application requires a minimum Android OS version 4.4.
 To run the application, make sure the server has a reachable IP address for the client. Set the IP and enjoy the comfortable sleep provided by WakeMeUp!
 
+Distribution of works
+-----------
+Ziyi Luo is responsed to build up the hardware & software environment of the project. He is also responsed for the android application (front end) part. <br />
+Yuechen Zhao is responsed to the data analysis and machine learning part. <br />
+Yazhuo Nan is responsed to the back end server part of our project.
